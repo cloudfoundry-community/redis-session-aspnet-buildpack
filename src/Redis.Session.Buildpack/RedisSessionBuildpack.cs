@@ -3,24 +3,25 @@ using Steeltoe.Extensions.Configuration.CloudFoundry;
 using System;
 using System.IO;
 
-namespace Pivotal.Redis.Session.Buildpack
+namespace Redis.Session.Buildpack
 {
-    class Program
+    public class RedisSessionBuildpack : SupplyBuildpack
     {
-        static void Main(string[] args)
+        
+        protected override bool Detect(string buildPath)
         {
-            if (args.Length == 0)
-            {
-                Console.Error.WriteLine("Usage: Pivotal.Redis.Session.Buildpack.exe <appDir>");
-                Environment.Exit(1);
-            }
-            var appPath = args[0];
+            return File.Exists(Path.Combine(buildPath, "web.config"));
+        }
+
+        protected override void Apply(string buildPath, string cachePath, string depsPath, int index)
+        {
+            Console.WriteLine("=== Redis Session Buildpack ===");
 
             var configuration = new ConfigurationBuilder().AddEnvironmentVariables().AddCloudFoundry().Build();
 
-            var configFileFullPath = Path.Combine(appPath, "web.config");
+            var configFileFullPath = Path.Combine(buildPath, "web.config");
 
-            if(!File.Exists(configFileFullPath))
+            if (!File.Exists(configFileFullPath))
                 Environment.Exit(0);
 
             using (var configAppender = new WebConfigFileAppender(configFileFullPath, configuration))
@@ -28,7 +29,6 @@ namespace Pivotal.Redis.Session.Buildpack
                 configAppender.ApplyMachineKeySectionChanges();
                 configAppender.ApplySessionStateSectionChanges();
             }
-
         }
     }
 }

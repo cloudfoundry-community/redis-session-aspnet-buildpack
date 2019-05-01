@@ -3,7 +3,7 @@ using Steeltoe.CloudFoundry.Connector.Redis;
 using System;
 using System.Xml;
 
-namespace Pivotal.Redis.Session.Buildpack
+namespace Redis.Session.Buildpack
 {
     internal class WebConfigFileAppender : IDisposable
     {

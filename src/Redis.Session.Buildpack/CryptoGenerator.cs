@@ -2,7 +2,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Pivotal.Redis.Session.Buildpack
+namespace Redis.Session.Buildpack
 {
     internal class CryptoGenerator
     {
