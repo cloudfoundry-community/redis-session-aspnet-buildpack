@@ -7,7 +7,7 @@ namespace Redis.Session.Buildpack
 {
     public class RedisSessionBuildpack : SupplyBuildpack
     {
-        
+        ConsoleColor defaultColor = Console.ForegroundColor;
         protected override bool Detect(string buildPath)
         {
             return File.Exists(Path.Combine(buildPath, "web.config"));
@@ -15,7 +15,7 @@ namespace Redis.Session.Buildpack
 
         protected override void Apply(string buildPath, string cachePath, string depsPath, int index)
         {
-            Console.WriteLine("=== Redis Session Buildpack ===");
+            Console.WriteLine("=== Redis Session Buildpack execution started ===");
 
             var configuration = new ConfigurationBuilder().AddEnvironmentVariables().AddCloudFoundry().Build();
 
@@ -29,6 +29,12 @@ namespace Redis.Session.Buildpack
                 configAppender.ApplyMachineKeySectionChanges();
                 configAppender.ApplySessionStateSectionChanges();
             }
+            
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
+            Console.WriteLine("Note: Make sure the nuget package `Microsoft.Web.RedisSessionStateProvider` is installed on the application");
+            Console.ForegroundColor = defaultColor;
+
+            Console.WriteLine("=== Redis Session Buildpack execution completed ===");
         }
     }
 }

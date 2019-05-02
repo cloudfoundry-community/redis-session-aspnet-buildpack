@@ -20,15 +20,15 @@ namespace Redis.Session.Buildpack
         }
         public void ApplySessionStateSectionChanges()
         {
-            var sessionState = xmlDoc.SelectSingleNode("//configuration/system.web/sessionState");
+            Console.WriteLine("Removing existing session configurations...");
 
-            if (sessionState != null)
-                sessionState.RemoveAll();
-            else
-            {
-                sessionState = xmlDoc.CreateElement("sessionState");
-                xmlDoc.SelectSingleNode("//configuration/system.web").AppendChild(sessionState);
-            }
+            var sessionStates = xmlDoc.SelectNodes("//configuration/system.web/sessionState");
+
+            for (int i = 0; i < sessionStates.Count; i++)
+                sessionStates.Item(i).ParentNode.RemoveChild(sessionStates.Item(i));
+
+            var sessionState = xmlDoc.CreateElement("sessionState");
+            xmlDoc.SelectSingleNode("//configuration/system.web").AppendChild(sessionState);
 
             var modeAttribute = xmlDoc.CreateAttribute("mode");
             modeAttribute.Value = "Custom";
@@ -51,6 +51,9 @@ namespace Redis.Session.Buildpack
 
             var providerConnStringAttribute = xmlDoc.CreateAttribute("connectionString");
             providerConnStringAttribute.Value = new RedisCacheConnectorOptions(configuration).ToString();
+
+            Console.WriteLine($"Found redis connection '{providerConnStringAttribute.Value}'");
+
             providerElement.Attributes.Append(providerConnStringAttribute);
 
             providersNode.AppendChild(providerElement);
@@ -59,15 +62,17 @@ namespace Redis.Session.Buildpack
 
         public void ApplyMachineKeySectionChanges()
         {
-            var machineKey = xmlDoc.SelectSingleNode("//configuration/system.web/machineKey");
+            Console.WriteLine("Removing existing machineKey configuration...");
 
-            if (machineKey != null)
-                machineKey.RemoveAll();
-            else
-            {
-                machineKey = xmlDoc.CreateElement("machineKey");
-                xmlDoc.SelectSingleNode("//configuration/system.web").AppendChild(machineKey);
-            }
+            var machineKeys = xmlDoc.SelectNodes("//configuration/system.web/machineKey");
+
+            for (int i = 0; i < machineKeys.Count; i++)
+                machineKeys.Item(i).ParentNode.RemoveChild(machineKeys.Item(i));
+
+            Console.WriteLine($"Creating machineKey section with new validation, decryption keys and SHA1 validation...");
+
+            var machineKey = xmlDoc.CreateElement("machineKey");
+            xmlDoc.SelectSingleNode("//configuration/system.web").AppendChild(machineKey);
 
             var validationKeyAttribute = xmlDoc.CreateAttribute("validationKey");
             validationKeyAttribute.Value = CryptoGenerator.CreateKey(64);
