@@ -4,6 +4,10 @@ This is a supply buildpack that will detect the bounded redis service instance a
 - Any existing `sessionState` section(s) will be replaced with a custom one with valid connection string
 - Any existing `machineKey` section(s) will be replaced with new validation and decryption keys
 
+### Benefits of using this buildpack
+- No code change required to persist session to redis, when pushing any ASP.NET application to PCF 
+- So it reduces the effort in lifting and shifting a legacy ASP.NET application to PCF
+
 ### Usage Instructions
 
 To enable redis backed session in the application, please follow the below steps.
