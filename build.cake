@@ -1,6 +1,6 @@
 #addin nuget:?package=SharpZipLib&version=1.1.0
 #addin nuget:?package=Cake.Compression&version=0.2.2
-var name = Argument("name","Redis.Session.Buildpack");
+var name = Argument("name","redis-session-buildpack");
 var target = Argument("target", "Default");
 var stack = Argument("stack","windows");
 var vMajor = Argument("vmajor","1");

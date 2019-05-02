@@ -2,12 +2,12 @@
 using Steeltoe.Extensions.Configuration.CloudFoundry;
 using System;
 using System.IO;
+using System.Linq;
 
 namespace Redis.Session.Buildpack
 {
     public class RedisSessionBuildpack : SupplyBuildpack
     {
-        ConsoleColor defaultColor = Console.ForegroundColor;
         protected override bool Detect(string buildPath)
         {
             return File.Exists(Path.Combine(buildPath, "web.config"));
@@ -15,7 +15,10 @@ namespace Redis.Session.Buildpack
 
         protected override void Apply(string buildPath, string cachePath, string depsPath, int index)
         {
-            Console.WriteLine("=== Redis Session Buildpack execution started ===");
+            Console.WriteLine("================================================================================");
+            Console.WriteLine("=================== Redis Session Buildpack execution started ==================");
+            Console.WriteLine("================================================================================");
+
 
             var configuration = new ConfigurationBuilder().AddEnvironmentVariables().AddCloudFoundry().Build();
 
@@ -24,17 +27,22 @@ namespace Redis.Session.Buildpack
             if (!File.Exists(configFileFullPath))
                 Environment.Exit(0);
 
+            var dir = new DirectoryInfo(buildPath);
+            if (dir.EnumerateFiles("Microsoft.Web.RedisSessionStateProvider.dll", SearchOption.AllDirectories).ToList().Count == 0)
+            {
+                Console.Error.WriteLine("-----> **ERROR** Could not find assembly 'Microsoft.Web.RedisSessionStateProvider.dll' or one of its dependencies, make sure to install the nuget package 'Microsoft.Web.RedisSessionStateProvider'");
+                Environment.Exit(-1);
+            }
+
             using (var configAppender = new WebConfigFileAppender(configFileFullPath, configuration))
             {
                 configAppender.ApplyMachineKeySectionChanges();
                 configAppender.ApplySessionStateSectionChanges();
             }
-            
-            Console.ForegroundColor = ConsoleColor.DarkYellow;
-            Console.WriteLine("Note: Make sure the nuget package `Microsoft.Web.RedisSessionStateProvider` is installed on the application");
-            Console.ForegroundColor = defaultColor;
 
-            Console.WriteLine("=== Redis Session Buildpack execution completed ===");
+            Console.WriteLine("================================================================================");
+            Console.WriteLine("=================== Redis Session Buildpack execution completed ================");
+            Console.WriteLine("================================================================================");
         }
     }
 }

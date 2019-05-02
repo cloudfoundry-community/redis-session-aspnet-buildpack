@@ -15,7 +15,7 @@ applications:
 - name: my_sample_application_using_redis_session
   stack: windows2016
   buildpacks: 
-    - https://github.com/alfusinigoj/redis-session-aspnet-buildpack/releases/download/1.0.0/Redis.Session.Buildpack-win-x64.zip
+    - https://github.com/alfusinigoj/redis-session-aspnet-buildpack/releases/download/1.0.0/redis-session-buildpack-win-x64.zip
     - hwc_buildpack
 ```
 
