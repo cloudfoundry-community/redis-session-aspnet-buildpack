@@ -56,6 +56,8 @@ namespace Redis.Session.Buildpack
 
             Console.WriteLine($"-----> Found redis connection '{GetRedisConnectionString()}'");
 
+            Console.WriteLine($"-----> Creating sessionState section with the above connection string...");
+
             providerElement.Attributes.Append(providerConnStringAttribute);
 
             providersNode.AppendChild(providerElement);
