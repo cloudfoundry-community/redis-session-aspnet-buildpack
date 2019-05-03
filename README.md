@@ -1,6 +1,7 @@
 ### Redis Session Buildpack
 
 This is a supply buildpack that will detect the bounded redis service instance and modifies the `web.config` with the `sessionState` and `machineKey` sections.
+- Uses Steeltoe connectors to build the connection configuration
 - Any existing `sessionState` section(s) will be replaced with a custom one with valid connection string
 - Any existing `machineKey` section(s) will be replaced with new validation and decryption keys
 
