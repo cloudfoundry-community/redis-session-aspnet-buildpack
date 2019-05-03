@@ -31,7 +31,7 @@ applications:
   services:
    - my_redis_service
 ```
-- To bind the application to the redis service to the application `manifest.yml` as above
+- To bind the application to the redis service to the application, add your redis service instance name in the `manifest.yml` as above
 - Push the application to PCF, you will be seeing logs as below
 
 ```text
@@ -41,8 +41,9 @@ applications:
 -----> Creating machineKey section with new validation, decryption keys and SHA1 validation...
 -----> Removing existing session configurations...
 -----> Found redis connection 'xxxxxxxxxxxxxxx,password=xxxxxxxxxxxxxxxxxxx,allowAdmin=false,abortConnect=true,resolveDns=false,ssl=false'
+-----> Creating sessionState section with the above connection string...
 ================================================================================
 =================== Redis Session Buildpack execution completed ================
 ```
 
-*If you come across any issues, kindly raise an issue at https://github.com/alfusinigoj/redis-session-aspnet-buildpack/issues. You are also welcome to contribute through pull requests.*
+*If you come across any issues, kindly raise an issue at https://github.com/alfusinigoj/redis-session-aspnet-buildpack/issues. You are also welcome to contribute.*
