@@ -69,7 +69,6 @@ class Build : NukeBuild
 
     Target Clean => _ => _
         .Description("Cleans up **/bin and **/obj folders")
-        .Before(Restore)
         .Executes(() =>
         {
             SourceDirectory.GlobDirectories("**/bin", "**/obj").ForEach(DeleteFile);
@@ -136,12 +135,8 @@ class Build : NukeBuild
             var workBinDirectory = workDirectory / "bin";
             var scriptsDirectory = RootDirectory / "scripts";
 
-            var requiredAssembliesSourceDirectory = SourceDirectory / "requiredAssemblies";
-            var requiredAssembliesTargetDirectory = workBinDirectory / "requiredAssemblies";
-
             CopyDirectoryRecursively(publishDirectory, workBinDirectory, DirectoryExistsPolicy.Merge);
             CopyDirectoryRecursively(scriptsDirectory, workBinDirectory, DirectoryExistsPolicy.Merge);
-            CopyDirectoryRecursively(requiredAssembliesSourceDirectory, requiredAssembliesTargetDirectory, DirectoryExistsPolicy.Merge);
 
             var tempZipFile = TemporaryDirectory / PackageZipName;
 
@@ -157,12 +152,11 @@ class Build : NukeBuild
         .Description("Creates a GitHub release (or ammends existing) and uploads buildpack artifact")
         .Requires(() => GitHubToken)
         .Requires(() => BuildVersion)
+    .DependsOn(Publish)
         .Executes(async () =>
         {
             if (!GitRepository.IsGitHubRepository())
                 throw new Exception("Only supported when git repo remote is github");
-
-
 
             var client = new GitHubClient(new ProductHeaderValue(BuildpackProjectName))
             {
@@ -175,12 +169,8 @@ class Build : NukeBuild
             var owner = gitIdParts[0];
             var repoName = gitIdParts[1];
 
-            if (IsPreRelease)
-            {
+            var releaseName = IsPreRelease ? $"v{GitVersion.MajorMinorPatch}-prerelease" : $"v{GitVersion.MajorMinorPatch}";
 
-            }
-
-            var releaseName = $"v{GitVersion.MajorMinorPatch}";
             Release release;
             try
             {
@@ -202,7 +192,9 @@ class Build : NukeBuild
                 release = await client.Repository.Release.Create(owner, repoName, newRelease);
             }
 
-            var existingAsset = release.Assets.FirstOrDefault(x => x.Name == PackageZipName);
+            var targetPackageName = IsPreRelease ? $"{Path.GetFileNameWithoutExtension(PackageZipName)}-prerelease.zip" : PackageZipName;
+
+            var existingAsset = release.Assets.FirstOrDefault(x => x.Name == targetPackageName);
             if (existingAsset != null)
             {
                 Logger.Log(LogLevel.Normal, $"Deleting assert {existingAsset.Name}...");
@@ -210,7 +202,11 @@ class Build : NukeBuild
             }
 
             var zipPackageLocation = ArtifactsDirectory / PackageZipName;
-            var releaseAssetUpload = new ReleaseAssetUpload(PackageZipName, "application/zip", File.OpenRead(zipPackageLocation), null);
+            var targetZipPackageLocation = ArtifactsDirectory / targetPackageName;
+
+            File.Copy(zipPackageLocation, targetZipPackageLocation, true);
+
+            var releaseAssetUpload = new ReleaseAssetUpload(targetPackageName, "application/zip", File.OpenRead(targetZipPackageLocation), null);
 
             Logger.Log(LogLevel.Normal, $"Uploading assert {releaseAssetUpload.FileName}...");
 
