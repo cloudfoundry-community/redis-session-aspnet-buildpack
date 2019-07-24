@@ -2,11 +2,16 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Redis.Session.Buildpack
+namespace Pivotal.Redis.Aspnet.Session.Buildpack
 {
-    internal class CryptoGenerator
+    public interface ICryptoGenerator
     {
-        public static String CreateKey(int numBytes)
+        string CreateKey(int numBytes);
+    }
+
+    public class CryptoGenerator : ICryptoGenerator
+    {
+        public string CreateKey(int numBytes)
         {
             var rng = new RNGCryptoServiceProvider();
             byte[] buff = new byte[numBytes];
@@ -15,9 +20,9 @@ namespace Redis.Session.Buildpack
             return BytesToHexString(buff);
         }
 
-        static String BytesToHexString(byte[] bytes)
+        static string BytesToHexString(byte[] bytes)
         {
-            StringBuilder hexString = new StringBuilder(64);
+            StringBuilder hexString = new StringBuilder();
 
             for (int counter = 0; counter < bytes.Length; counter++)
             {

@@ -1,26 +1,37 @@
-﻿using Microsoft.Extensions.Configuration;
-using Steeltoe.CloudFoundry.Connector;
-using Steeltoe.CloudFoundry.Connector.Redis;
-using Steeltoe.CloudFoundry.Connector.Services;
-using System;
+﻿using System;
 using System.Xml;
 
-namespace Redis.Session.Buildpack
+namespace Pivotal.Redis.Aspnet.Session.Buildpack
 {
-    internal class WebConfigFileAppender : IDisposable
+    public interface IWebConfigFileAppender : IDisposable
+    {
+        void ApplyChanges();
+        void SaveChanges();
+    }
+
+    public class WebConfigFileAppender : IWebConfigFileAppender
     {
         private bool disposedValue = false;
         private readonly string fileFullPath;
-        private readonly IConfiguration configuration;
+        private readonly IRedisConnectionProvider connectionProvider;
+        private readonly ICryptoGenerator cryptoGenerator;
         XmlDocument xmlDoc = new XmlDocument();
 
-        public WebConfigFileAppender(string fileFullPath, IConfiguration configuration)
+        public WebConfigFileAppender(string fileFullPath, IRedisConnectionProvider connectionProvider, ICryptoGenerator cryptoGenerator)
         {
             this.fileFullPath = fileFullPath;
-            this.configuration = configuration;
+            this.connectionProvider = connectionProvider;
+            this.cryptoGenerator = cryptoGenerator;
             xmlDoc.Load(fileFullPath);
         }
-        public void ApplySessionStateSectionChanges()
+
+        public void ApplyChanges()
+        {
+            ApplySessionStateSectionChanges();
+            ApplyMachineKeySectionChanges();
+        }
+
+        private void ApplySessionStateSectionChanges()
         {
             Console.WriteLine("-----> Removing existing session configurations...");
 
@@ -52,9 +63,9 @@ namespace Redis.Session.Buildpack
             providerElement.Attributes.Append(providerTypeAttribute);
 
             var providerConnStringAttribute = xmlDoc.CreateAttribute("connectionString");
-            providerConnStringAttribute.Value = GetRedisConnectionString();
+            providerConnStringAttribute.Value = connectionProvider.GetConnectionString();
 
-            Console.WriteLine($"-----> Found redis connection '{GetRedisConnectionString()}'");
+            Console.WriteLine($"-----> Found redis connection '{connectionProvider.GetConnectionString()}'");
 
             Console.WriteLine($"-----> Creating sessionState section with the above connection string...");
 
@@ -64,16 +75,7 @@ namespace Redis.Session.Buildpack
             sessionState.AppendChild(providersNode);
         }
 
-        private string GetRedisConnectionString()
-        {
-            var info = configuration.GetSingletonServiceInfo<RedisServiceInfo>();
-            var redisConfig = new RedisCacheConnectorOptions(configuration);
-
-            var connectionOptions = new RedisCacheConfigurer().Configure(info, redisConfig);
-            return connectionOptions.ToString();
-        }
-
-        public void ApplyMachineKeySectionChanges()
+        private void ApplyMachineKeySectionChanges()
         {
             Console.WriteLine("-----> Removing existing machineKey configuration...");
 
@@ -88,11 +90,11 @@ namespace Redis.Session.Buildpack
             xmlDoc.SelectSingleNode("//configuration/system.web").AppendChild(machineKey);
 
             var validationKeyAttribute = xmlDoc.CreateAttribute("validationKey");
-            validationKeyAttribute.Value = CryptoGenerator.CreateKey(64);
+            validationKeyAttribute.Value = cryptoGenerator.CreateKey(64);
             machineKey.Attributes.Append(validationKeyAttribute);
 
             var decryptionKeyAttribute = xmlDoc.CreateAttribute("decryptionKey");
-            decryptionKeyAttribute.Value = CryptoGenerator.CreateKey(24);
+            decryptionKeyAttribute.Value = cryptoGenerator.CreateKey(24);
             machineKey.Attributes.Append(decryptionKeyAttribute);
 
             var validationAttribute = xmlDoc.CreateAttribute("validation");
@@ -100,6 +102,9 @@ namespace Redis.Session.Buildpack
             machineKey.Attributes.Append(validationAttribute);
         }
 
+        /// <summary>
+        /// Saves automatically when appender is disposed
+        /// </summary>
         public void SaveChanges()
         {
             xmlDoc.Save(fileFullPath);

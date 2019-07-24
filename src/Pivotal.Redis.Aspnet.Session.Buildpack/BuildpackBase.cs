@@ -1,4 +1,8 @@
-namespace Redis.Session.Buildpack
+using System;
+using System.Collections;
+using System.Linq;
+
+namespace Pivotal.Redis.Aspnet.Session.Buildpack
 {
     public abstract class BuildpackBase
     {
@@ -26,6 +30,11 @@ namespace Redis.Session.Buildpack
         /// <returns>Status return code</returns>
         public int Run(string[] args)
         {
+            foreach (var arg in args)
+            {
+                Console.WriteLine(arg);
+            }
+
             return DoRun(args);
         }
 

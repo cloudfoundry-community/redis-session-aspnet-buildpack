@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "Redis.Session.Buildpack": {
-      "commandName": "Project",
-      "commandLineArgs": "supply C:\\Users\\AlfusInigoJaganathan\\source\\repos\\sample_test_session_section\\sample_test_session_section a a 0"
-    }
-  }
-}

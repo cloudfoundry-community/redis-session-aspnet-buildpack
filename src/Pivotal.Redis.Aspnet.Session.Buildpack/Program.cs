@@ -1,6 +1,5 @@
-using System;
 
-namespace Redis.Session.Buildpack
+namespace Pivotal.Redis.Aspnet.Session.Buildpack
 {
     public class Program
     {
