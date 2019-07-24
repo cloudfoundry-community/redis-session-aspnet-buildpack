@@ -1,58 +1,50 @@
-This project offers simplified way of creating buildpacks for Cloud Foundry in .NET
+### Redis Session Buildpack
 
-Buildpacks fall into two categories: supply and final. Supply buildpacks can be chained to supply dependencies to the app or modify its configuration. They essentially act as middleware. Final buildpack is the one that is launched in the end of the buildpack chain and is responsible for telling Cloud Foundry the startup command for the application.
+This is a supply buildpack that will detect the bounded redis service instance and modifies the `web.config` with the `sessionState` and `machineKey` sections.
+- Uses Steeltoe connectors to build the connection configuration
+- Any existing `sessionState` section(s) will be replaced with a custom one with valid connection string
+- Any existing `machineKey` section(s) will be replaced with new validation and decryption keys
 
-## Requirements
+### Benefits of using this buildpack
+- No code change required to persist session to redis, when pushing any ASP.NET application to PCF 
+- So it reduces the effort in lifting and shifting a legacy ASP.NET application to PCF
 
-* .NET Core SDK (>=2.0)
+### Pre-requisites
+- PCF environment with redis tile in market place
+- A redis service instance created
+- `cf push` access to the PCF enviromnment
 
-## How to implement
+### Usage Instructions
 
-Start with `MyBuilpack` class. Depending on the type of buildpack you're creating, inherit either from `SupplyBuildpack` or `FinalBuildpack` and implement the `Detect`, `Apply`, and in the case of final buildpack the `GetStartupCommand`.
-
-## How to package
-
-You can build buildpack that are compatible with both Windows and Linux stacks, however when targeting Windows stack it can only be compiled on a Windows machine.
-
-The provided build script accepts one argument to specify the stack you're targeting. Windows stack will leverage .NET Framework (which is already included in the stemcell), resulting in smaller buildpack. When targeting Linux, the buildpack will be assembled with .NET core as self-contained (resulting in ~22mb package).
-
-### Compiling on Windows
-
-```powershell
-.\build.ps1 -ScriptArgs '-stack=windows'
-```
-
-or
-
-```powershell
-.\build.ps1 -ScriptArgs '-stack=linux'
-```
-
-### Compiling on Linux or Mac
-
-```bash
-./build.sh --stack=linux
-```
-
-Final output will be placed in `/publish` folder
-
-#### IMPORTANT: 
-If you're compiling for Linux stack, you must run `scripts/fix.sh` on a Linux or mac box before it can be used on cloud foundry. this is necessary to properly repackage zip file with correct file permissions which cannot be set by the regular compression library used by the build script
-
-## How to use
-
-* Option 1: Upload to Cloud Foundry via `cf create-buildpack` option and reference in manifest by name
-* Option 2: Upload to a public host (like GitHub releases page) and reference in manifest via URL
-
-#### Sample manifest
-
+To enable redis backed session in the application, please follow the below steps.
+- Install nuget package `Microsoft.Web.RedisSessionStateProvider` in your application, preferrably the latest one.
+- Add the buildpack in your application `manifest.yml` as in the example below. You can pick the latest release from https://github.com/alfusinigoj/redis-session-aspnet-buildpack/releases
 
 ```yaml
+---
 applications:
-- name: simpleapp
+- name: redis-buildpack-sample
+  memory: 1024M
   stack: windows2016
-  buildpacks: 
-    - https://github.com/macsux/web-config-transform-buildpack/releases/download/1.0/web-config-transform-buildpack.zip
-    - hwc_buildpack
+  buildpacks:
+   - https://github.com/alfusinigoj/redis-session-aspnet-buildpack/releases/download/1.0.0/redis-session-buildpack-win-x64.zip
+   - https://github.com/cloudfoundry/hwc-buildpack/releases/download/v3.1.8/hwc-buildpack-windows2016-v3.1.8.zip
+  services:
+   - my_redis_service
+```
+- To bind the application to the redis service to the application, add your redis service instance name in the `manifest.yml` as above
+- Push the application to PCF, you will be seeing logs as below
+
+```text
+=================== Redis Session Buildpack execution started ==================
+================================================================================
+-----> Removing existing machineKey configuration...
+-----> Creating machineKey section with new validation, decryption keys and SHA1 validation...
+-----> Removing existing session configurations...
+-----> Found redis connection 'xxxxxxxxxxxxxxx,password=xxxxxxxxxxxxxxxxxxx,allowAdmin=false,abortConnect=true,resolveDns=false,ssl=false'
+-----> Creating sessionState section with the above connection string...
+================================================================================
+=================== Redis Session Buildpack execution completed ================
 ```
 
+*If you come across any issues, kindly raise an issue at https://github.com/alfusinigoj/redis-session-aspnet-buildpack/issues. You are also welcome to contribute.*
