@@ -12,10 +12,12 @@ variables:
   NukeBuildScript: 'build.ps1'
   NukeFile: '.nuke'
 
+  VersionFile: 'release.version'
   GitVersion: $(GitVersion.MajorMinorPatch)
   BuildSuffix: $[counter(variables['GitVersion'], 0)]
   BuildVersion: $(GitVersion)-$(BuildSuffix)
 
+  GitFolder: '.git'
   SolutionFile: 'Pivotal.Redis.Aspnet.Session.Buildpack.sln'
   ArtifactsDirectory: 'artifacts'
 
@@ -43,6 +45,12 @@ steps:
   displayName: 'Copy $(NukeFile) into staging directory'
   inputs:
     Contents: $(NukeFile)
+    TargetFolder: $(Build.ArtifactStagingDirectory)
+
+- task: CopyFiles@1
+  displayName: 'Copy $(VersionFile) into staging directory'
+  inputs:
+    Contents: $(VersionFile)
     TargetFolder: $(Build.ArtifactStagingDirectory)
 
 - task: CopyFiles@1

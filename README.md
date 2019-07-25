@@ -1,5 +1,9 @@
 ### Redis Session Buildpack
 
+[![Build Status](https://dev.azure.com/ajaganathan-cloudfoundry-community/redis-session-aspnet-buildpack/_apis/build/status/cloudfoundry-community.redis-session-aspnet-buildpack?branchName=master)](https://dev.azure.com/ajaganathan-cloudfoundry-community/redis-session-aspnet-buildpack/_build/latest?definitionId=3&branchName=master)
+
+[![GitHub](https://img.shields.io/github/release/cloudfoundry-community/redis-session-aspnet-buildpack.svg?style=flat-square)](https://github.com/cloudfoundry-community/redis-session-aspnet-buildpack/releases)
+
 This is a supply buildpack that will detect the bounded redis service instance and modifies the `web.config` with the `sessionState` and `machineKey` sections.
 - Uses Steeltoe connectors to build the connection configuration
 - Any existing `sessionState` section(s) will be replaced with a custom one with valid connection string
@@ -18,7 +22,7 @@ This is a supply buildpack that will detect the bounded redis service instance a
 
 To enable redis backed session in the application, please follow the below steps.
 - Install nuget package `Microsoft.Web.RedisSessionStateProvider` in your application, preferrably the latest one.
-- Add the buildpack in your application `manifest.yml` as in the example below. You can pick the latest release from https://github.com/alfusinigoj/redis-session-aspnet-buildpack/releases
+- Add the buildpack in your application `manifest.yml` as in the example below. You can pick the latest release from https://github.com/cloudfoundry-community/redis-session-aspnet-buildpack/releases
 
 ```yaml
 ---
@@ -27,7 +31,7 @@ applications:
   memory: 1024M
   stack: windows2016
   buildpacks:
-   - https://github.com/alfusinigoj/redis-session-aspnet-buildpack/releases/download/1.0.0/redis-session-buildpack-win-x64.zip
+   - https://github.com/cloudfoundry-community/redis-session-aspnet-buildpack/releases/download/1.0.0/redis-session-buildpack-win-x64.zip
    - https://github.com/cloudfoundry/hwc-buildpack/releases/download/v3.1.8/hwc-buildpack-windows2016-v3.1.8.zip
   services:
    - my_redis_service
@@ -47,4 +51,4 @@ applications:
 =================== Redis Session Buildpack execution completed ================
 ```
 
-*If you come across any issues, kindly raise an issue at https://github.com/alfusinigoj/redis-session-aspnet-buildpack/issues. You are also welcome to contribute.*
+*If you come across any issues, kindly raise an issue at https://github.com/cloudfoundry-community/redis-session-aspnet-buildpack/issues. You are also welcome to contribute.*

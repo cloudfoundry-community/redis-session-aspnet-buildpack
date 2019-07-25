@@ -66,6 +66,7 @@ class Build : NukeBuild
     AbsolutePath SourceDirectory => RootDirectory / "src";
     AbsolutePath TestsDirectory => RootDirectory / "tests";
     AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
+    AbsolutePath VersionFile => RootDirectory / "release.version";
 
     Target Clean => _ => _
         .Description("Cleans up **/bin and **/obj folders")
@@ -76,9 +77,21 @@ class Build : NukeBuild
             EnsureCleanDirectory(ArtifactsDirectory);
         });
 
+    Target SetPackageZipName => _ => _
+        .DependsOn(Clean)
+        .Executes(() =>
+        {
+            if (!GitRepository.IsGitHubRepository())
+                throw new Exception("SetPackageZipName supported when this is in a git repository");
+
+            Logger.Log(LogLevel.Normal, $"Updating version file {VersionFile} with name {PackageZipName}");
+
+            File.WriteAllText(VersionFile, $"{PackageZipName}");
+        });
+
     Target Restore => _ => _
         .Description("Restores NuGet dependencies for the buildpack")
-        .DependsOn(Clean)
+        .DependsOn(SetPackageZipName)
         .Executes(() =>
         {
             DotNetRestore(s => s
@@ -152,7 +165,6 @@ class Build : NukeBuild
         .Description("Creates a GitHub release (or ammends existing) and uploads buildpack artifact")
         .Requires(() => GitHubToken)
         .Requires(() => BuildVersion)
-    .DependsOn(Publish)
         .Executes(async () =>
         {
             if (!GitRepository.IsGitHubRepository())
@@ -169,7 +181,10 @@ class Build : NukeBuild
             var owner = gitIdParts[0];
             var repoName = gitIdParts[1];
 
-            var releaseName = IsPreRelease ? $"v{GitVersion.MajorMinorPatch}-prerelease" : $"v{GitVersion.MajorMinorPatch}";
+            var packageFileNamewithoutExtension = Path.GetFileNameWithoutExtension(GetPackageZipNameFromVersionFile());
+            var majorMinorPatch = packageFileNamewithoutExtension.Split('-')[3];
+
+            var releaseName = IsPreRelease ? $"v{majorMinorPatch}-prerelease" : $"v{majorMinorPatch}";
 
             Release release;
             try
@@ -192,7 +207,7 @@ class Build : NukeBuild
                 release = await client.Repository.Release.Create(owner, repoName, newRelease);
             }
 
-            var targetPackageName = IsPreRelease ? $"{Path.GetFileNameWithoutExtension(PackageZipName)}-prerelease.zip" : PackageZipName;
+            var targetPackageName = IsPreRelease ? $"{packageFileNamewithoutExtension}-prerelease.zip" : GetPackageZipNameFromVersionFile();
 
             var existingAsset = release.Assets.FirstOrDefault(x => x.Name == targetPackageName);
             if (existingAsset != null)
@@ -201,7 +216,7 @@ class Build : NukeBuild
                 await client.Repository.Release.DeleteAsset(owner, repoName, existingAsset.Id);
             }
 
-            var zipPackageLocation = ArtifactsDirectory / PackageZipName;
+            var zipPackageLocation = ArtifactsDirectory / GetPackageZipNameFromVersionFile();
             var targetZipPackageLocation = ArtifactsDirectory / targetPackageName;
 
             File.Copy(zipPackageLocation, targetZipPackageLocation, true);
@@ -240,5 +255,13 @@ class Build : NukeBuild
 
         DeleteFile(zipFile);
         RenameFile(tmpFileName, zipFile, FileExistsPolicy.Overwrite);
+    }
+
+    public string GetPackageZipNameFromVersionFile()
+    {
+        if (!File.Exists(VersionFile))
+            throw new FileNotFoundException(VersionFile);
+
+        return File.ReadAllText(VersionFile);
     }
 }
