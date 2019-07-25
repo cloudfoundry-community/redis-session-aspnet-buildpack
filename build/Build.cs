@@ -36,7 +36,7 @@ class Build : NukeBuild
         Windows,
         Linux
     }
-    public static int Main () => Execute<Build>(x => x.Publish);
+    public static int Main() => Execute<Build>(x => x.Publish);
     const string BuildpackProjectName = "Pivotal.Redis.Aspnet.Session.Buildpack";
     string PackageZipName => $"{BuildpackProjectName}-{Runtime}-{GitVersion.MajorMinorPatch}.zip";
 
@@ -219,7 +219,8 @@ class Build : NukeBuild
             var zipPackageLocation = ArtifactsDirectory / GetPackageZipNameFromVersionFile();
             var targetZipPackageLocation = ArtifactsDirectory / targetPackageName;
 
-            File.Copy(zipPackageLocation, targetZipPackageLocation, true);
+            if (string.Compare(zipPackageLocation, targetZipPackageLocation) != 0)
+                File.Copy(zipPackageLocation, targetZipPackageLocation, true);
 
             var releaseAssetUpload = new ReleaseAssetUpload(targetPackageName, "application/zip", File.OpenRead(targetZipPackageLocation), null);
 
