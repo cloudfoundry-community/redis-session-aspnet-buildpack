@@ -20,6 +20,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ci", "ci", "{9A683666-D39A-
 		ci\azure-pipelines.yml = ci\azure-pipelines.yml
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "solution_items", "solution_items", "{EC83B3B6-2728-419A-885B-5CF878EC98A2}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Buildpack.IntegrationTests", "tests\Buildpack.IntegrationTests\Buildpack.IntegrationTests.csproj", "{A46E6EC6-9674-45DF-B96F-90D60597483B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,6 +44,10 @@ Global
 		{34AEB452-A5E5-431F-870E-43D4B10777EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{34AEB452-A5E5-431F-870E-43D4B10777EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{34AEB452-A5E5-431F-870E-43D4B10777EC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A46E6EC6-9674-45DF-B96F-90D60597483B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A46E6EC6-9674-45DF-B96F-90D60597483B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A46E6EC6-9674-45DF-B96F-90D60597483B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A46E6EC6-9674-45DF-B96F-90D60597483B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -44,6 +56,7 @@ Global
 		{512F3F46-B79C-40C7-B148-7E1DDDE3DA54} = {5B33419C-423F-4F77-9827-0F61A19919A5}
 		{F6E63DDE-EC41-4756-A6A3-7BF6A3ACC172} = {7EE7803A-2479-4BBD-8EDA-74547D5AB3DB}
 		{34AEB452-A5E5-431F-870E-43D4B10777EC} = {6E433424-E19D-4612-B90B-CAABEA3195F7}
+		{A46E6EC6-9674-45DF-B96F-90D60597483B} = {6E433424-E19D-4612-B90B-CAABEA3195F7}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {562B0D1A-9FD1-4FE2-AA87-CA7A9C5D4E89}

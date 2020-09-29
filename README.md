@@ -15,7 +15,7 @@ This is a supply buildpack that will detect the bounded redis service instance a
 
 ### Pre-requisites
 - PCF environment with redis tile in market place
-- A redis service instance created
+- A redis service instance created with `Lua-scripting` enabled
 - `cf push` access to the PCF enviromnment
 
 ### Usage Instructions

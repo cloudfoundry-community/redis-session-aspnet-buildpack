@@ -1,10 +1,7 @@
-﻿using Microsoft.Extensions.Configuration;
-using Moq;
+﻿using Moq;
 using Pivotal.Redis.Aspnet.Session.Buildpack;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using XmlDiffLib;
 using Xunit;
 
@@ -14,32 +11,40 @@ namespace Buildpack.UnitTests
     {
         string expectedConfigPath = Path.Combine(Environment.CurrentDirectory, "ConfigFiles", "Expected.config");
         string givenConfigPathTemplate = Path.Combine(Environment.CurrentDirectory, "ConfigFiles", "Given{0}.config");
+        ILogger logger;
+        IOptions options;
+
+        public WebConfigFileAppenderTests()
+        {
+            logger = new ConsoleLogger();
+            options = new ApplicationOptions();
+        }
 
         [Fact]
         public void Test_IfImplementsIWebConfigFileAppender()
         {
-            var configFilePath = string.Format(givenConfigPathTemplate, "WithoutSession");
-            var appender = new WebConfigFileAppender(configFilePath, new RedisConnectionProviderStub(), new CryptoGeneratorStub());
+            options.WebConfigFilePath = string.Format(givenConfigPathTemplate, "WithoutSession");
+            var appender = new WebConfigFileAppender(options, logger, new RedisConnectionProviderStub(), new CryptoGeneratorStub());
             Assert.IsAssignableFrom<IWebConfigFileAppender>(appender);
         }
 
         [Fact]
         public void Test_IfImplementsIDisposable()
         {
-            var configFilePath = string.Format(givenConfigPathTemplate, "WithoutSession");
-            var appender = new WebConfigFileAppender(configFilePath, new RedisConnectionProviderStub(), new CryptoGeneratorStub());
+            options.WebConfigFilePath = string.Format(givenConfigPathTemplate, "WithoutSession");
+            var appender = new WebConfigFileAppender(options, logger, new RedisConnectionProviderStub(), new CryptoGeneratorStub());
             Assert.IsAssignableFrom<IDisposable>(appender);
         }
 
         [Fact]
         public void Test_IfRedisConnectionProviderAndCryptoGeneratorAreInvokedAsNeeded()
         {
-            var configFilePath = string.Format(givenConfigPathTemplate, "WithoutSession");
+            options.WebConfigFilePath = string.Format(givenConfigPathTemplate, "WithoutSession");
 
             var provider = new Mock<IRedisConnectionProvider>();
             var generator = new Mock<ICryptoGenerator>();
 
-            using (var appender = new WebConfigFileAppender(configFilePath, provider.Object, generator.Object))
+            using (var appender = new WebConfigFileAppender(options, logger, provider.Object, generator.Object))
                 appender.ApplyChanges();
 
             provider.Verify(p => p.GetConnectionString(), Times.Exactly(2));
@@ -78,7 +83,9 @@ namespace Buildpack.UnitTests
         {
             File.Copy(configFilePath, appendedConfigFilePath, true);
 
-            using (var appender = new WebConfigFileAppender(appendedConfigFilePath, new RedisConnectionProviderStub(), new CryptoGeneratorStub()))
+            options.WebConfigFilePath = appendedConfigFilePath;
+
+            using (var appender = new WebConfigFileAppender(options, logger, new RedisConnectionProviderStub(), new CryptoGeneratorStub()))
                 appender.ApplyChanges();
 
             var expectedWebConfig = File.ReadAllText(expectedConfigPath);

@@ -5,10 +5,6 @@ using Steeltoe.CloudFoundry.Connector.Services;
 
 namespace Pivotal.Redis.Aspnet.Session.Buildpack
 {
-    public interface IRedisConnectionProvider
-    {
-        string GetConnectionString();
-    }
 
     public class RedisConnectionProvider : IRedisConnectionProvider
     {

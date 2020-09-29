@@ -1,39 +1,35 @@
-﻿using System;
-using System.Xml;
+﻿using System.Xml;
 
 namespace Pivotal.Redis.Aspnet.Session.Buildpack
 {
-    public interface IWebConfigFileAppender : IDisposable
-    {
-        void ApplyChanges();
-        void SaveChanges();
-    }
 
     public class WebConfigFileAppender : IWebConfigFileAppender
     {
         private bool disposedValue = false;
-        private readonly string fileFullPath;
+        private readonly IOptions options;
+        private readonly ILogger logger;
         private readonly IRedisConnectionProvider connectionProvider;
         private readonly ICryptoGenerator cryptoGenerator;
         XmlDocument xmlDoc = new XmlDocument();
 
-        public WebConfigFileAppender(string fileFullPath, IRedisConnectionProvider connectionProvider, ICryptoGenerator cryptoGenerator)
+        public WebConfigFileAppender(IOptions options, ILogger logger, IRedisConnectionProvider connectionProvider, ICryptoGenerator cryptoGenerator)
         {
-            this.fileFullPath = fileFullPath;
+            this.options = options;
+            this.logger = logger;
             this.connectionProvider = connectionProvider;
             this.cryptoGenerator = cryptoGenerator;
-            xmlDoc.Load(fileFullPath);
         }
 
         public void ApplyChanges()
         {
+            xmlDoc.Load(options.WebConfigFilePath);
             ApplySessionStateSectionChanges();
             ApplyMachineKeySectionChanges();
         }
 
         private void ApplySessionStateSectionChanges()
         {
-            Console.WriteLine("-----> Removing existing session configurations...");
+            logger.WriteLog("-----> Removing existing session configurations...");
 
             var sessionStates = xmlDoc.SelectNodes("//configuration/system.web/sessionState");
 
@@ -65,9 +61,9 @@ namespace Pivotal.Redis.Aspnet.Session.Buildpack
             var providerConnStringAttribute = xmlDoc.CreateAttribute("connectionString");
             providerConnStringAttribute.Value = connectionProvider.GetConnectionString();
 
-            Console.WriteLine($"-----> Found redis connection '{connectionProvider.GetConnectionString()}'");
+            logger.WriteLog($"-----> Found redis connection '{connectionProvider.GetConnectionString()}'");
 
-            Console.WriteLine($"-----> Creating sessionState section with the above connection string...");
+            logger.WriteLog($"-----> Creating sessionState section with the above connection string...");
 
             providerElement.Attributes.Append(providerConnStringAttribute);
 
@@ -77,14 +73,14 @@ namespace Pivotal.Redis.Aspnet.Session.Buildpack
 
         private void ApplyMachineKeySectionChanges()
         {
-            Console.WriteLine("-----> Removing existing machineKey configuration...");
+            logger.WriteLog("-----> Removing existing machineKey configuration...");
 
             var machineKeys = xmlDoc.SelectNodes("//configuration/system.web/machineKey");
 
             for (int i = 0; i < machineKeys.Count; i++)
                 machineKeys.Item(i).ParentNode.RemoveChild(machineKeys.Item(i));
 
-            Console.WriteLine($"-----> Creating machineKey section with new validation, decryption keys and SHA1 validation...");
+            logger.WriteLog($"-----> Creating machineKey section with new validation, decryption keys and SHA1 validation...");
 
             var machineKey = xmlDoc.CreateElement("machineKey");
             xmlDoc.SelectSingleNode("//configuration/system.web").AppendChild(machineKey);
@@ -107,7 +103,7 @@ namespace Pivotal.Redis.Aspnet.Session.Buildpack
         /// </summary>
         public void SaveChanges()
         {
-            xmlDoc.Save(fileFullPath);
+            xmlDoc.Save(options.WebConfigFilePath);
         }
 
         protected virtual void Dispose(bool disposing)

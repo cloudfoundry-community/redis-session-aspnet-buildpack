@@ -19,9 +19,4 @@
                 webConfigFileAppender.ApplyChanges();
         }
     }
-
-    public interface IProcessor
-    {
-        void Execute();
-    }
 }
