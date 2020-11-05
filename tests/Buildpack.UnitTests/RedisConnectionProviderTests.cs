@@ -26,22 +26,22 @@ namespace Buildpack.UnitTests
         {
             var environment = @"
                                  {
-                                      'p-redis': [
+                                      ""p-redis"": [
                                         {
-                                          'credentials': {
-                                            'host': '10.66.32.54',
-                                            'password': '4254bd8b-7f83-4a8d-8f38-8206a9d7a9f7',
-                                            'port': 43887
+                                          ""credentials"": {
+                                            ""host"": ""10.66.32.54"",
+                                            ""password"": ""4254bd8b-7f83-4a8d-8f38-8206a9d7a9f7"",
+                                            ""port"": 43887
                                           },
-                                          'syslog_drain_url': null,
-                                          'volume_mounts': [],
-                                          'label': 'p-redis',
-                                          'provider': null,
-                                          'plan': 'shared-vm',
-                                          'name': 'autosource_redis_cache',
-                                          'tags': [
-                                            'pivotal',
-                                            'redis'
+                                          ""syslog_drain_url"": null,
+                                          ""volume_mounts"": [],
+                                          ""label"": ""p-redis"",
+                                          ""provider"": null,
+                                          ""plan"": ""shared-vm"",
+                                          ""name"": ""autosource_redis_cache"",
+                                          ""tags"": [
+                                            ""pivotal"",
+                                            ""redis""
                                           ]
                                         }
                                       ]

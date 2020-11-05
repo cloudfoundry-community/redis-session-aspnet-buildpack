@@ -3,13 +3,13 @@ using System.IO;
 using System.Linq;
 using ICSharpCode.SharpZipLib.Zip;
 using Nuke.Common;
-using Nuke.Common.BuildServers;
 using Nuke.Common.Execution;
 using Nuke.Common.Git;
 using Nuke.Common.IO;
 using Nuke.Common.ProjectModel;
 using Nuke.Common.Tooling;
 using Nuke.Common.Tools.DotNet;
+using Nuke.Common.Tools.GitHub;
 using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Tools.NuGet;
 using Nuke.Common.Utilities.Collections;
@@ -56,12 +56,13 @@ class Build : NukeBuild
     readonly string BuildVersion = string.Empty;
 
     string Runtime => Stack == StackType.Windows ? "win-x64" : "linux-x64";
-    string Framework => Stack == StackType.Windows ? "net47" : "netcoreapp2.2";
+    // string Framework => Stack == StackType.Windows ? "net47" : "netcoreapp3.1";
+    string Framework => "netcoreapp3.1";
 
 
     [Solution] readonly Solution Solution;
     [GitRepository] readonly GitRepository GitRepository;
-    [GitVersion] readonly GitVersion GitVersion;
+    [Nuke.Extended.GitVersion] readonly GitVersion GitVersion;
 
     AbsolutePath SourceDirectory => RootDirectory / "src";
     AbsolutePath TestsDirectory => RootDirectory / "tests";
@@ -110,20 +111,25 @@ class Build : NukeBuild
                 .SetConfiguration(Configuration)
                 .SetFramework(Framework)
                 .SetRuntime(Runtime)
-                .SetAssemblyVersion(GitVersion.GetNormalizedAssemblyVersion())
-                .SetFileVersion(GitVersion.GetNormalizedFileVersion())
+                .SetAssemblyVersion(GitVersion.AssemblySemVer)
+                .SetFileVersion(GitVersion.AssemblySemFileVer)
                 .SetInformationalVersion(GitVersion.InformationalVersion)
                 .EnableNoRestore());
         });
 
     Target Test => _ => _
-        .Description("Execute tests")
         .DependsOn(Compile)
         .Executes(() =>
         {
             DotNetTest(s => s
-                .SetProjectFile(Solution)
-                .EnableNoRestore());
+                .SetConfiguration(Configuration)
+                .SetNoBuild(IsLocalBuild)
+                .ResetVerbosity()
+                .SetFramework(Framework)
+                .SetRuntime(Runtime)
+                .CombineWith(
+                    Solution.GetProjects("*Tests"), (cs, v) => cs
+                        .SetProjectFile(v)));
         });
 
     Target Publish => _ => _
@@ -136,8 +142,8 @@ class Build : NukeBuild
                 .SetConfiguration(Configuration)
                 .SetFramework(Framework)
                 .SetRuntime(Runtime)
-                .SetAssemblyVersion(GitVersion.GetNormalizedAssemblyVersion())
-                .SetFileVersion(GitVersion.GetNormalizedFileVersion())
+                .SetAssemblyVersion(GitVersion.AssemblySemVer)
+                .SetFileVersion(GitVersion.AssemblySemFileVer)
                 .SetInformationalVersion(GitVersion.InformationalVersion)
                 .EnableNoRestore());
 
