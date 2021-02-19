@@ -105,6 +105,7 @@ class Build : NukeBuild
         .DependsOn(Restore)
         .Executes(() =>
         {
+            throw new ArgumentException("************** test false positive");
             Logger.Info(Stack);
             DotNetBuild(s => s
                 .SetProjectFile(Solution)
