@@ -15,7 +15,7 @@ jobs:
         shell: bash
         run: |
           set -o errexit -o pipefail -o nounset
-
+          dotnet --version
           ./build.sh --stack linux
   test-windows:
     runs-on: windows-latest
