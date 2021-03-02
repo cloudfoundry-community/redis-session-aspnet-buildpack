@@ -37,8 +37,7 @@ class Build : NukeBuild
     }
     public static int Main() => Execute<Build>(x => x.Publish);
     const string BuildpackProjectName = "Pivotal.Redis.Aspnet.Session.Buildpack";
-    const string MajorMinorPatch = "1.0.7"; //todo: another way to get version from git?
-    string PackageZipName => $"{BuildpackProjectName}-{Runtime}-{MajorMinorPatch}.zip";
+    string PackageZipName => $"{BuildpackProjectName}-{Runtime}.zip";
 
     [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
     readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
@@ -160,77 +159,77 @@ class Build : NukeBuild
         });
 
 
-    Target Release => _ => _
-        .Description("Creates a GitHub release (or ammends existing) and uploads buildpack artifact")
-        .Requires(() => GitHubToken)
-        .Requires(() => BuildVersion)
-        .Executes(async () =>
-        {
-            if (!GitRepository.IsGitHubRepository())
-                throw new Exception("Only supported when git repo remote is github");
-
-            var client = new GitHubClient(new ProductHeaderValue(BuildpackProjectName))
-            {
-                Credentials = new Credentials(GitHubToken, AuthenticationType.Bearer)
-            };
-
-            Logger.Log(LogLevel.Normal, $"Releasing in Github {client.BaseAddress}");
-
-            var gitIdParts = GitRepository.Identifier.Split("/");
-            var owner = gitIdParts[0];
-            var repoName = gitIdParts[1];
-
-            var packageFileNamewithoutExtension = Path.GetFileNameWithoutExtension(GetPackageZipNameFromVersionFile());
-            var majorMinorPatch = packageFileNamewithoutExtension.Split('-')[3];
-
-            var releaseName = IsPreRelease ? $"v{majorMinorPatch}-prerelease" : $"v{majorMinorPatch}";
-
-            Release release;
-            try
-            {
-                Logger.Log(LogLevel.Normal, $"Checking for existence of release with name {releaseName}...");
-                release = await client.Repository.Release.Get(owner, repoName, releaseName);
-                Logger.Log(LogLevel.Normal, $"Found release {releaseName} at {release.AssetsUrl}");
-            }
-            catch (Exception)
-            {
-                Logger.Log(LogLevel.Normal, $"Release with name {releaseName} not found.. so creating new...");
-
-                var newRelease = new NewRelease(releaseName)
-                {
-                    Name = releaseName,
-                    Draft = false,
-                    Prerelease = IsPreRelease,
-                    Body = $"Build Version: {(string.IsNullOrWhiteSpace(BuildVersion) ? "Unknown" : BuildVersion)}"
-                };
-                release = await client.Repository.Release.Create(owner, repoName, newRelease);
-            }
-
-            var targetPackageName = IsPreRelease ? $"{packageFileNamewithoutExtension}-prerelease.zip" : GetPackageZipNameFromVersionFile();
-
-            var existingAsset = release.Assets.FirstOrDefault(x => x.Name == targetPackageName);
-            if (existingAsset != null)
-            {
-                Logger.Log(LogLevel.Normal, $"Deleting assert {existingAsset.Name}...");
-                await client.Repository.Release.DeleteAsset(owner, repoName, existingAsset.Id);
-            }
-
-            var zipPackageLocation = ArtifactsDirectory / GetPackageZipNameFromVersionFile();
-            var targetZipPackageLocation = ArtifactsDirectory / targetPackageName;
-
-            if (string.Compare(zipPackageLocation, targetZipPackageLocation) != 0)
-                File.Copy(zipPackageLocation, targetZipPackageLocation, true);
-
-            var releaseAssetUpload = new ReleaseAssetUpload(targetPackageName, "application/zip", File.OpenRead(targetZipPackageLocation), null);
-
-            Logger.Log(LogLevel.Normal, $"Uploading assert {releaseAssetUpload.FileName}...");
-
-            var releaseAsset = await client.Repository.Release.UploadAsset(release, releaseAssetUpload);
-
-            Logger.Block(releaseAsset.BrowserDownloadUrl);
-
-            Logger.Log(LogLevel.Normal, $"Released in Github {client.BaseAddress}, successfully");
-        });
+    // Target Release => _ => _
+    //     .Description("Creates a GitHub release (or ammends existing) and uploads buildpack artifact")
+    //     .Requires(() => GitHubToken)
+    //     .Requires(() => BuildVersion)
+    //     .Executes(async () =>
+    //     {
+    //         if (!GitRepository.IsGitHubRepository())
+    //             throw new Exception("Only supported when git repo remote is github");
+    //
+    //         var client = new GitHubClient(new ProductHeaderValue(BuildpackProjectName))
+    //         {
+    //             Credentials = new Credentials(GitHubToken, AuthenticationType.Bearer)
+    //         };
+    //
+    //         Logger.Log(LogLevel.Normal, $"Releasing in Github {client.BaseAddress}");
+    //
+    //         var gitIdParts = GitRepository.Identifier.Split("/");
+    //         var owner = gitIdParts[0];
+    //         var repoName = gitIdParts[1];
+    //
+    //         var packageFileNamewithoutExtension = Path.GetFileNameWithoutExtension(GetPackageZipNameFromVersionFile());
+    //         var majorMinorPatch = packageFileNamewithoutExtension.Split('-')[3];
+    //
+    //         var releaseName = IsPreRelease ? $"v{majorMinorPatch}-prerelease" : $"v{majorMinorPatch}";
+    //
+    //         Release release;
+    //         try
+    //         {
+    //             Logger.Log(LogLevel.Normal, $"Checking for existence of release with name {releaseName}...");
+    //             release = await client.Repository.Release.Get(owner, repoName, releaseName);
+    //             Logger.Log(LogLevel.Normal, $"Found release {releaseName} at {release.AssetsUrl}");
+    //         }
+    //         catch (Exception)
+    //         {
+    //             Logger.Log(LogLevel.Normal, $"Release with name {releaseName} not found.. so creating new...");
+    //
+    //             var newRelease = new NewRelease(releaseName)
+    //             {
+    //                 Name = releaseName,
+    //                 Draft = false,
+    //                 Prerelease = IsPreRelease,
+    //                 Body = $"Build Version: {(string.IsNullOrWhiteSpace(BuildVersion) ? "Unknown" : BuildVersion)}"
+    //             };
+    //             release = await client.Repository.Release.Create(owner, repoName, newRelease);
+    //         }
+    //
+    //         var targetPackageName = IsPreRelease ? $"{packageFileNamewithoutExtension}-prerelease.zip" : GetPackageZipNameFromVersionFile();
+    //
+    //         var existingAsset = release.Assets.FirstOrDefault(x => x.Name == targetPackageName);
+    //         if (existingAsset != null)
+    //         {
+    //             Logger.Log(LogLevel.Normal, $"Deleting assert {existingAsset.Name}...");
+    //             await client.Repository.Release.DeleteAsset(owner, repoName, existingAsset.Id);
+    //         }
+    //
+    //         var zipPackageLocation = ArtifactsDirectory / GetPackageZipNameFromVersionFile();
+    //         var targetZipPackageLocation = ArtifactsDirectory / targetPackageName;
+    //
+    //         if (string.Compare(zipPackageLocation, targetZipPackageLocation) != 0)
+    //             File.Copy(zipPackageLocation, targetZipPackageLocation, true);
+    //
+    //         var releaseAssetUpload = new ReleaseAssetUpload(targetPackageName, "application/zip", File.OpenRead(targetZipPackageLocation), null);
+    //
+    //         Logger.Log(LogLevel.Normal, $"Uploading assert {releaseAssetUpload.FileName}...");
+    //
+    //         var releaseAsset = await client.Repository.Release.UploadAsset(release, releaseAssetUpload);
+    //
+    //         Logger.Block(releaseAsset.BrowserDownloadUrl);
+    //
+    //         Logger.Log(LogLevel.Normal, $"Released in Github {client.BaseAddress}, successfully");
+    //     });
 
     public static void MakeFilesInZipUnixExecutable(AbsolutePath zipFile)
     {
